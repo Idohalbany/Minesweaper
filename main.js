@@ -11,7 +11,7 @@ const NORMAL = '🙂';
 const FLAG_ICON = '🚩';
 const SHOW = 'SHOW';
 const HIDE = 'HIDE';
-var totalFlags = gLevel.MINES;
+var totalFlags;
 var flagCount;
 
 var gGame = {
@@ -58,6 +58,8 @@ function onInit() {
   renderFlags();
   gGame.shownCount = 0;
   gGame.markedCount = 0;
+  totalFlags = gLevel.MINES;
+  renderFlags();
 
   const flag = document.querySelector('.d0');
   flag.addEventListener('click', function () {
