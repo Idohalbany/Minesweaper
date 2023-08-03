@@ -20,6 +20,7 @@ var gGame = {
   markedCount: 0,
   secsPassed: 0,
   lives: 3,
+  revealedMines: 0,
 };
 
 var flagEnabled = false; // ? do we need it ? yes!!
@@ -204,6 +205,7 @@ function onCellClicked(elTile, i, j) {
     tile.type = SHOW;
     elTile.classList.add('mine');
     gGame.lives--;
+    gGame.revealedMines++;
     updateLives();
     if (gGame.lives === 0) {
       gameOver();
@@ -379,12 +381,20 @@ for (var i = 0; i < 3; i++) {
 // check if the user won //
 
 function checkWin() {
+  // console.log('Checking win...');
+  // console.log('gGame.shownCount:', gGame.shownCount);
+  // console.log(
+  //   'Expected shown count:',
+  //   gLevel.SIZE * gLevel.SIZE - gLevel.MINES
+  // );
+  // console.log('gGame.markedCount:', gGame.markedCount);
+  // console.log('Expected marked count:', (gLevel.MINES - gGame.revealedMines));
+
   if (
     gGame.shownCount === gLevel.SIZE * gLevel.SIZE - gLevel.MINES ||
-    gGame.markedCount === gLevel.MINES
+    gGame.markedCount === gLevel.MINES - gGame.revealedMines
   ) {
     gGame.isOn = false;
-    // console.log('You won!');
     emojiReload(true, false);
     clearInterval(timer);
   }
