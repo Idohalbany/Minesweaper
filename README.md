@@ -1,2 +1,2 @@
-# Minesweaper
-Minesweaper mockup coding academy sprint 1
+# Minesweeper
+Minesweeper mockup coding academy sprint 1
