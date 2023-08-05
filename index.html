@@ -8,6 +8,36 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body onload="onInit()">
+    <nav>
+      <button class="safe-click" onclick="safeClick(this)">
+        <span>3</span> Safe click
+      </button>
+      <p class="hint h1">
+        <img
+          class="bulb1"
+          onclick="onHint(this, 0)"
+          src="img/turnoffbulb.png"
+          alt="turn-off-bulb"
+        />
+      </p>
+      <p class="hint h2">
+        <img
+          class="bulb2"
+          onclick="onHint(this, 1)"
+          src="img/turnoffbulb.png"
+          alt="turn-off-bulb"
+        />
+      </p>
+      <p class="hint h3">
+        <img
+          class="bulb3"
+          onclick="onHint(this, 2)"
+          src="img/turnoffbulb.png"
+          alt="turn-off-bulb"
+        />
+      </p>
+      <p onclick="darkMode()" id="mode-icon">🌚</p>
+    </nav>
     <h1 class="header">M I N E S W E E P E R</h1>
     <div class="levels">
       <button class="begginer" onclick="levelBtns(this)">Begginer</button>

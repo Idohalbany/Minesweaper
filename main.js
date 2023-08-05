@@ -11,7 +11,7 @@ const NORMAL = '🙂';
 const FLAG_ICON = '🚩';
 const SHOW = 'SHOW';
 const HIDE = 'HIDE';
-var totalFlags;
+var totalFlags; // ! win condition.
 var flagCount;
 
 var gGame = {
@@ -20,12 +20,14 @@ var gGame = {
   markedCount: 0,
   secsPassed: 0,
   lives: 3,
+  safeClickRemain: 3,
   revealedMines: 0,
-};
+}; // * probably should have been used more.
 
-var flagEnabled = false; // ? do we need it ? yes!!
-var isFirstClick;
+var flagEnabled = false;
+var isFirstClick; // * declare.
 var timer;
+var isHintActivated = false;
 var minesLocation = []; // ! hold the bombs
 
 // game level //
@@ -42,7 +44,7 @@ function levelBtns(elBtn) {
     gLevel.SIZE = 12;
     gLevel.MINES = 32;
   }
-  // console.log(gLevel.SIZE, gLevel.MINES);
+  if (timer !== null) clearInterval(timer);
   onInit();
 }
 
@@ -52,14 +54,17 @@ function onInit() {
   gGame.isOn = true;
   isFirstClick = true;
   emojiReload(false, false); // * false/true as we want to set the right emoji //
-  gBoard = buildBoard(gLevel.SIZE); // * build board as soon as the page loads without mines
+  gBoard = buildBoard(gLevel.SIZE); // * build board as soon as the page loads without mines //
   renderBoard(gBoard);
   renderClock();
-  renderFlags();
   gGame.shownCount = 0;
   gGame.markedCount = 0;
-  totalFlags = gLevel.MINES;
-  renderFlags();
+  gGame.revealedMines = 0;
+  gGame.lives = 3;
+  gGame.safeClickRemain = 3;
+  var elSafe = document.querySelector('.safe-click span'); // ? ask vicky! there has to be efficient way.
+  elSafe.innerText = gGame.safeClickRemain;
+  updateLives();
 
   const flag = document.querySelector('.d0');
   flag.addEventListener('click', function () {
@@ -71,6 +76,8 @@ function onInit() {
       flag.classList.remove('clicked');
     }
   });
+  totalFlags = gLevel.MINES;
+  renderFlags();
 }
 
 // creating the game board //
@@ -115,7 +122,7 @@ function placeMines(boardSize, minesNumber, firstClick) {
       for (var k = 0; k < minesLocation.length; k++) {
         // Check if the places are the same.
         if (minesLocation[k].i === i && minesLocation[k].j === j) {
-          gBoard[i][j].isMine = true; // Set the isMine according to the result in getMinesLocation().
+          gBoard[i][j].isMine = true; // * Setting the isMine according to the result in getMinesLocation().
           break;
         }
       }
@@ -139,7 +146,7 @@ function renderBoard(board) {
   for (var i = 0; i < board.length; i++) {
     strHTML += '<tr>\n';
     for (var j = 0; j < board.length; j++) {
-      const cell = board[i][j];
+      const cell = board[i][j]; // ! dom //
       var className = getCellClass(cell);
       var innerText = '';
       if (cell.isFlagged) {
@@ -172,13 +179,16 @@ function getCellClass(cell) {
       className += ` n${cell.minesAroundCount}`;
     }
   }
-  return className;
+  return className; // ? ask vicky! is that ok to do ?
 }
 
 // make cell clicked function //
 
 function onCellClicked(elTile, i, j) {
   const tile = gBoard[i][j];
+
+  if (!flagEnabled && tile.isFlagged) return;
+
   if (!gGame.isOn || tile.type === SHOW) return;
 
   if (isFirstClick) {
@@ -187,16 +197,18 @@ function onCellClicked(elTile, i, j) {
   }
 
   if (flagEnabled) {
-    if (!tile.isFlagged && totalFlags > 0) {
-      elTile.innerText = FLAG_ICON;
-      tile.isFlagged = true;
-      totalFlags--;
-      if (tile.isMine) gGame.markedCount++;
-    } else if (tile.isFlagged) {
+    if (tile.isFlagged) {
+      // * If the tile is already flagged, unflag it.
       elTile.innerText = '';
       tile.isFlagged = false;
       totalFlags++;
       if (tile.isMine) gGame.markedCount--;
+    } else if (totalFlags > 0) {
+      // ! If the tile is not flagged and we have flags left, flag the tile.
+      elTile.innerText = FLAG_ICON;
+      tile.isFlagged = true;
+      totalFlags--;
+      if (tile.isMine) gGame.markedCount++;
     }
     renderFlags();
     checkWin();
@@ -204,50 +216,58 @@ function onCellClicked(elTile, i, j) {
   }
 
   if (tile.isMine) {
-    tile.type = SHOW;
-    elTile.classList.add('mine');
-    gGame.lives--;
-    gGame.revealedMines++;
-    updateLives();
-    if (gGame.lives === 0) {
-      gameOver();
-      return;
+    if (isHintActivated) {
+      useHint({ i, j });
     } else {
-      renderBoard(gBoard);
+      tile.type = SHOW;
+      elTile.classList.add('mine');
+      gGame.lives--;
+      gGame.revealedMines++;
+      updateLives();
+      if (gGame.lives === 0) {
+        gameOver();
+        return;
+      } else {
+        renderBoard(gBoard);
+      }
     }
-    return;
+    return; // ? ask vicky! there has to be efficient way.
   }
 
-  tile.type = SHOW;
-  gGame.shownCount++; // * Increment shownCount
-
-  // console.log(`Shown count: ${gGame.shownCount}`);
-
-  elTile.classList.add('clicked');
-
-  if (tile.minesAroundCount > 0) {
-    elTile.innerText = tile.minesAroundCount;
-    elTile.classList.add(`n${tile.minesAroundCount}`);
+  if (isHintActivated) {
+    // * hint condition.
+    useHint({ i, j });
   } else {
-    expandShown(tile.location);
+    tile.type = SHOW;
+    gGame.shownCount++; // * Increment shownCount
+    elTile.classList.add('clicked');
+    // console.log(`Shown count: ${gGame.shownCount}`);
+
+    if (tile.minesAroundCount > 0) {
+      elTile.innerText = tile.minesAroundCount;
+      elTile.classList.add(`n${tile.minesAroundCount}`);
+    } else {
+      expandShown(tile.location);
+    }
   }
 
   checkWin();
-  if (!gGame.isOn) return;
+  if (!gGame.isOn) return; // ? ask vicky! why do we have to return ?
 }
 
-// expand all empty tiles //
+// expand all empty tiles/cells //
 
 function expandShown(location) {
-  var negs = getNegs(gBoard, location.i, location.j);
+  var negs = getNegs(gBoard, location.i, location.j); // * set the nums.
   for (var k = 0; k < negs.length; k++) {
     var cell = gBoard[negs[k].i][negs[k].j];
+    if (cell.isFlagged) continue;
     if (!cell.isMine && cell.type === HIDE) {
       cell.type = SHOW;
       if (!cell.wasShown) {
         gGame.shownCount++;
         cell.wasShown = true;
-        console.log(`Shown count: ${gGame.shownCount}`);
+        // console.log(`Shown count: ${gGame.shownCount}`);
       }
       if (cell.minesAroundCount === 0) {
         expandShown(cell.location);
@@ -255,12 +275,13 @@ function expandShown(location) {
     }
   }
   renderBoard(gBoard);
-  checkWin();
+  checkWin(); // * checks again if the player won
 }
 
 // find negs //
 
 function getNegs(board, rowIdx, colIdx) {
+  // * counting.
   var negs = [];
   for (var i = rowIdx - 1; i <= rowIdx + 1; i++) {
     if (i < 0 || i > board.length - 1) continue;
@@ -304,7 +325,6 @@ function getMinesLocation(boardSize, minesNumber) {
 // render clock //
 
 function renderClock() {
-  // ? find put if this is necessary - gGame.isOn = true;
   var seconds = gGame.secsPassed;
   var minutes = 0;
   const timeDiv = document.querySelector('.d2');
@@ -371,7 +391,7 @@ function renderFlags() {
   flag.innerText = FLAG_ICON + totalFlags;
 }
 
-// render the info divs //
+// ! notice - rendering the info divs - this is not a function.
 
 for (var i = 0; i < 3; i++) {
   const infoDiv = document.querySelector('.info-div');
@@ -383,17 +403,8 @@ for (var i = 0; i < 3; i++) {
 // check if the user won //
 
 function checkWin() {
-  // console.log('Checking win...');
-  // console.log('gGame.shownCount:', gGame.shownCount);
-  // console.log(
-  //   'Expected shown count:',
-  //   gLevel.SIZE * gLevel.SIZE - gLevel.MINES
-  // );
-  // console.log('gGame.markedCount:', gGame.markedCount);
-  // console.log('Expected marked count:', (gLevel.MINES - gGame.revealedMines));
-
   if (
-    gGame.shownCount === gLevel.SIZE * gLevel.SIZE - gLevel.MINES ||
+    gGame.shownCount === gLevel.SIZE * gLevel.SIZE - gLevel.MINES &&
     gGame.markedCount === gLevel.MINES - gGame.revealedMines
   ) {
     gGame.isOn = false;
@@ -469,4 +480,102 @@ function onRightClick(event, i, j, elTile) {
 
   renderFlags();
   checkWin();
+}
+
+// hints //
+
+function onHint(bulb) {
+  if (bulb.classList.contains('used-hint')) return;
+
+  bulb.classList.add('used-hint');
+
+  if (bulb.classList.contains('bulb1')) bulb.src = 'img/turnonbulb.png'; // ! dom //
+  if (bulb.classList.contains('bulb2')) bulb.src = 'img/turnonbulb.png'; // ! dom //
+  if (bulb.classList.contains('bulb3')) bulb.src = 'img/turnonbulb.png'; // ! dom //
+  isHintActivated = true;
+} // ? ask vicky! there has to be efficient way.
+
+function useHint(location) {
+  if (!isHintActivated) return;
+
+  const negs = getNegs(gBoard, location.i, location.j);
+  negs.push(location);
+
+  const originalStates = negs.map((neg) => ({
+    // * this is some powerful stuff.
+    cell: gBoard[neg.i][neg.j],
+    type: gBoard[neg.i][neg.j].type,
+  }));
+
+  originalStates.forEach((state) => {
+    state.cell.type = SHOW;
+  });
+
+  renderBoard(gBoard);
+
+  setTimeout(() => {
+    hideHintCells(originalStates); // * Restore states //
+  }, 1000);
+
+  isHintActivated = false;
+}
+
+function hideHintCells(originalStates) {
+  originalStates.forEach((state) => {
+    state.cell.type = state.type;
+  });
+  renderBoard(gBoard); // * a new rendering //
+}
+
+// safe click //
+
+function safeClick(elSafe) {
+  // ? ask vicky! i think that three functions is a lot.
+  if (gGame.safeClickRemain > 0) {
+    gGame.safeClickRemain--;
+    var remain = elSafe.querySelector('span');
+    remain.innerText = gGame.safeClickRemain;
+    var safeCell = findRandomSafeCell();
+    flashSafeCell(safeCell);
+  }
+}
+
+function findRandomSafeCell() {
+  var safeCells = [];
+  for (var i = 0; i < gBoard.length; i++) {
+    for (var j = 0; j < gBoard[0].length; j++) {
+      if (gBoard[i][j].type !== SHOW && !gBoard[i][j].isMine) {
+        safeCells.push({ i, j });
+      }
+    }
+  }
+  const randomIndex = Math.floor(Math.random() * safeCells.length); // ! safeCells is an arr so you have to use length!!
+  const randomCell = safeCells[randomIndex];
+  return randomCell;
+}
+
+function flashSafeCell(safeCell) {
+  const elCell = document.querySelector(`.cell${safeCell.i}-${safeCell.j}`);
+  elCell.style.backgroundColor = '#2e8dd6';
+  elCell.style.transition = '300ms';
+  setTimeout(function () {
+    elCell.style.backgroundColor = ''; // ! vanished.
+  }, 4000);
+}
+
+// dark mode //
+
+function darkMode() {
+  const icon = document.getElementById('mode-icon');
+  const livesTxt = document.querySelector('.lives-txt');
+  const htmlBody = document.body;
+
+  htmlBody.classList.toggle('dark-mode');
+  if (htmlBody.classList.contains('dark-mode')) {
+    livesTxt.style.color = 'white';
+    icon.innerText = '🌝';
+  } else {
+    livesTxt.style.color = '#22382f';
+    icon.innerText = '🌚'; // * replace icons.
+  }
 }

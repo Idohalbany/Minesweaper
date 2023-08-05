@@ -1,9 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
 
 :root {
-  --primary: #393e46;
+  --primary: #282c32;
   --secondary: #6d9886;
-  --dark: #121f1a;
+  --dark: #22382f;
   --light: #dcdcdc;
   --white: #ffffff;
   --clicked: #f9f9f9;
@@ -16,26 +16,85 @@
 }
 
 body {
-  background-color: var(--dark);
+  background-color: whitesmoke;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  transition: 500ms;
+}
+
+.dark-mode {
+  background-color: var(--dark);
+}
+
+nav {
+  display: flex;
+}
+nav #mode-icon {
+  position: absolute;
+  left: 94%;
+  top: 45px;
+  font-size: 2.2rem;
+  cursor: pointer;
+}
+
+nav .hint {
+  position: absolute;
+  top: -65px;
+  transform: scale(0.3);
+  cursor: pointer;
+  transition: 200ms;
+}
+
+.h1 {
+  left: 82%;
+}
+
+.h2 {
+  left: 74%;
+}
+
+.h3 {
+  left: 78%;
+}
+
+nav .hint:hover {
+  transform: scale(0.4);
+}
+
+nav .safe-click {
+  position: absolute;
+  top: 48px;
+  left: 4%;
+  border: none;
+  background-color: #2e8dd6;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 200ms;
+}
+
+nav .safe-click:hover {
+  opacity: 0.8;
 }
 
 .header {
   margin: 30px 0px;
   color: #e3aa24;
-  font-size: 2.7rem;
+  font-size: 2.2rem;
 }
+
 .info-div {
   display: flex;
   flex-direction: row;
   background-color: var(--primary);
-  padding: 2vh;
+  padding: 1.7vh;
   width: fit-content;
-  margin: 1.2vw auto;
+  margin: 1vw auto;
   border-radius: 1vh;
 }
 
@@ -58,7 +117,7 @@ body {
   font-size: 2rem;
   color: var(--secondary);
   border-radius: 1vh;
-  padding: 0.55rem;
+  padding: 0.8rem;
   user-select: none;
 }
 
@@ -76,28 +135,29 @@ body {
   font-size: 2rem;
   color: var(--secondary);
   border-radius: 1vh;
-  padding: 0.5rem;
+  padding: 0.8rem;
   user-select: none;
 }
 
 .levels button {
-  margin: 0px 20px;
-  padding: 10px 20px;
+  margin: 5px 10px;
+  padding: 15px 25px;
   border: none;
-  background-color: var(--white);
+  background-color: var(--primary);
+  color: var(--white);
   border-radius: 10px;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .levels button:hover {
-  background-color: var(--light);
+  background-color: var(--dark);
   cursor: pointer;
 }
 
 .container {
   background-color: var(--primary);
   width: fit-content;
-  padding: 3rem;
+  padding: 2rem;
   margin: 1rem auto;
   border-radius: 10px;
 }
@@ -123,7 +183,7 @@ body {
   background-color: var(--white);
   border-radius: 1vh;
   margin: 1px;
-  width: 3vw;
+  width: 3.1vw;
   height: 3vw;
   user-select: none;
 }
@@ -135,13 +195,13 @@ body {
 
 .lives {
   display: flex;
-  margin-top: 25px;
-  font-size: 1.4rem;
+  margin-top: 15px;
+  font-size: 1.2rem;
   letter-spacing: 5px;
 }
 
 .lives-txt {
-  color: var(--white);
+  color: var(--primary);
 }
 .lives-num {
   color: #ca1c1c;
@@ -149,10 +209,10 @@ body {
 }
 
 .footer {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: #e3aa24;
-  letter-spacing: 2px;
-  margin-top: 25px;
+  letter-spacing: 1.8px;
+  margin-top: 15px;
 }
 
 .clicked {
