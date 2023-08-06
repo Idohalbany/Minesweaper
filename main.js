@@ -64,6 +64,10 @@ function onInit() {
   gGame.safeClickRemain = 3;
   var elSafe = document.querySelector('.safe-click span'); // ? ask vicky! there has to be efficient way.
   elSafe.innerText = gGame.safeClickRemain;
+  document.querySelector('.bulb1').src = 'img/turnoffbulb.png';
+  document.querySelector('.bulb2').src = 'img/turnoffbulb.png';
+  document.querySelector('.bulb3').src = 'img/turnoffbulb.png';
+
   updateLives();
 
   const flag = document.querySelector('.d0');
@@ -370,7 +374,8 @@ function revealMines() {
 function emojiReload(win, lose) {
   const emogiDiv = document.querySelector('.d1');
   emogiDiv.addEventListener('click', function () {
-    location.reload();
+    if (timer !== null) clearInterval(timer);
+    onInit();
   });
   if (win) {
     clearInterval(timer);
